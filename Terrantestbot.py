@@ -74,7 +74,7 @@ class TerrantestBot(sc2.BotAI):
             if self.can_afford(UnitTypeId.SUPPLYDEPOT) and not self.already_pending(UnitTypeId.SUPPLYDEPOT):
                 await self.build(UnitTypeId.SUPPLYDEPOT, near=cc.position.towards(self.game_info.map_center, 8))
 
-        if self.units(UnitTypeId.SUPPLYDEPOT).exists:
+        if self.structures(UnitTypeId.SUPPLYDEPOT).ready:
             if (
                 self.can_afford(UnitTypeId.BARRACKS)
                 and not self.already_pending(UnitTypeId.BARRACKS)
