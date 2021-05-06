@@ -45,7 +45,7 @@ class TerrantestBot(sc2.BotAI):
         if iteration % 50 == 0 and self.units(UnitTypeId.MARINE).amount > 12:
             target = self.select_target()
             forces = self.units(UnitTypeId.MARINE) | self.units(UnitTypeId.MEDIVAC)
-            if (iteration//50) % 10 == 0:
+            if (iteration // 50) % 10 == 0:
                 for unit in forces:
                     self.do(unit.attack(target))
             else:
@@ -62,24 +62,25 @@ class TerrantestBot(sc2.BotAI):
                         break
                     self.do(bar.train(UnitTypeId.MARINE))
 
-        if self.units(UnitTypeId.STARPORT).exists and self.can_afford(UnitTypeId.MEDIVAC) and self.units(UnitTypeId.MEDIVAC).amount < 6:
+        if self.units(UnitTypeId.STARPORT).exists and self.can_afford(UnitTypeId.MEDIVAC) and self.units(
+                UnitTypeId.MEDIVAC).amount < 6:
             for sp in self.units(UnitTypeId.STARPORT):
                 if sp.noqueue:
                     if not self.can_afford(UnitTypeId.MEDIVAC):
                         break
                     self.do(sp.train(UnitTypeId.MEDIVAC))
 
-        elif self.supply_left < 3:
-            if self.can_afford(UnitTypeId.SUPPLYDEPOT):
+        if self.supply_left < 3:
+            if self.can_afford(UnitTypeId.SUPPLYDEPOT) and not self.already_pending(UnitTypeId.SUPPLYDEPOT):
                 await self.build(UnitTypeId.SUPPLYDEPOT, near=cc.position.towards(self.game_info.map_center, 8))
 
         if self.units(UnitTypeId.SUPPLYDEPOT).exists:
-            if not self.units(UnitTypeId.BARRACKS).exists:
-                if self.can_afford(UnitTypeId.BARRACKS) and not self.already_pending(UnitTypeId.BARRACKS):
-                    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
-            elif len(self.units(UnitTypeId.BARRACKS)) < 4:
-                if self.can_afford(UnitTypeId.BARRACKS) and not self.already_pending(UnitTypeId.BARRACKS):
-                    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
+            if (
+                self.can_afford(UnitTypeId.BARRACKS)
+                and not self.already_pending(UnitTypeId.BARRACKS)
+                and self.units(UnitTypeId.BARRACKS).amount < 4
+            ):
+                await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
 
             elif self.units(UnitTypeId.BARRACKS).exists and self.units(UnitTypeId.REFINERY).amount < 2:
                 if self.can_afford(UnitTypeId.REFINERY):
@@ -94,14 +95,15 @@ class TerrantestBot(sc2.BotAI):
                         worker.build(UnitTypeId.REFINERY, vg)
                         break
 
-            if self.units(UnitTypeId.BARRACKS).ready.exists:
-                f = self.units(UnitTypeId.FACTORY)
-                if not f.exists:
-                    if self.can_afford(UnitTypeId.FACTORY):
-                        await self.build(UnitTypeId.FACTORY, near=cc.position.towards(self.game_info.map_center, 8))
-                elif f.ready.exists and self.units(UnitTypeId.STARPORT).amount < 1:
-                    if self.can_afford(UnitTypeId.STARPORT):
-                        await self.build(UnitTypeId.STARPORT, near=cc.position.towards(self.game_info.map_center, 15).random_on_distance(8))
+        if self.units(UnitTypeId.BARRACKS).ready.exists:
+            f = self.units(UnitTypeId.FACTORY)
+            if not f.exists:
+                if self.can_afford(UnitTypeId.FACTORY):
+                    await self.build(UnitTypeId.FACTORY, near=cc.position.towards(self.game_info.map_center, 8))
+            elif f.ready.exists and self.units(UnitTypeId.STARPORT).amount < 1:
+                if self.can_afford(UnitTypeId.STARPORT):
+                    await self.build(UnitTypeId.STARPORT,
+                                     near=cc.position.towards(self.game_info.map_center, 15).random_on_distance(8))
 
         for a in self.units(UnitTypeId.REFINERY):
             if a.assigned_harvesters < a.ideal_harvesters:
@@ -117,7 +119,7 @@ class TerrantestBot(sc2.BotAI):
                 if bar.add_on_tag == 0 and not self.units(UnitTypeId.BARRACKSTECHLAB).exists:
                     await self.do(bar.build(UnitTypeId.BARRACKSTECHLAB))
 
-# Trying to get Stimpack Research but failing, gets assertion error
+        # Trying to get Stimpack Research but failing, gets assertion error
         if self.vespene >= 100 and not self.stim_started:
             btl = self.units(UnitTypeId.BARRACKSTECHLAB).ready
             abilities = await self.get_available_abilities(btl)
@@ -133,6 +135,6 @@ class TerrantestBot(sc2.BotAI):
 
 
 run_game(maps.get("AutomatonLE"), [
-        Bot(Race.Terran, TerrantestBot()),
-        Computer(Race.Protoss, Difficulty.Easy)
-    ], realtime=False)
+    Bot(Race.Terran, TerrantestBot()),
+    Computer(Race.Protoss, Difficulty.Easy)
+], realtime=False)
