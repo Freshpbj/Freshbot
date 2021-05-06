@@ -4,14 +4,16 @@ from sc2.constants import *
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.ability_id import AbilityId
 from sc2.units import Units
+from sc2.unit import Unit
 from sc2.ids.buff_id import BuffId
 from sc2.ids.upgrade_id import UpgradeId
-from sc2.ids.effect_id import EffectId
+from sc2.position import Point2
 from sc2.player import Bot, Computer
 
 
 class TerrantestBot(sc2.BotAI):
     def __init__(self):
+        self.unit_command_uses_self_do = True
         self.stim_started = False
 
     def select_target(self):
@@ -31,42 +33,41 @@ class TerrantestBot(sc2.BotAI):
 
     async def on_step(self, iteration):
         await self.distribute_workers()
-        await self.expand()
-        cc = (self.units(UnitTypeId.COMMANDCENTER) | self.units(UnitTypeId.ORBITALCOMMAND))
-        if not cc.exists:
-            target = self.enemy_structures.random or (self.enemy_start_locations[0]).position
+        ccs: Units = self.townhalls(UnitTypeId.COMMANDCENTER) | self.townhalls(UnitTypeId.ORBITALCOMMAND)
+        if not ccs:
+            target: Point2 = self.enemy_structures.random_or(self.enemy_start_locations[0]).position
             for unit in self.workers | self.units(UnitTypeId.MARINE):
-                await self.do(unit.attack(target))
+                self.do(unit.attack(target))
             return
         else:
-            cc = cc.first
+            cc: Unit = ccs.first
 
         if iteration % 50 == 0 and self.units(UnitTypeId.MARINE).amount > 12:
             target = self.select_target()
             forces = self.units(UnitTypeId.MARINE) | self.units(UnitTypeId.MEDIVAC)
             if (iteration//50) % 10 == 0:
                 for unit in forces:
-                    await self.do(unit.attack(target))
+                    self.do(unit.attack(target))
             else:
                 for unit in forces.idle:
-                    await self.do(unit.attack(target))
+                    self.do(unit.attack(target))
 
-        if self.can_afford(UnitTypeId.SCV) and self.workers.amount < 30 and cc.noqueue:
-            await self.do(cc.train(UnitTypeId.SCV))
+        if self.can_afford(UnitTypeId.SCV) and self.workers.amount < 30 and cc.is_idle:
+            self.do(cc.train(UnitTypeId.SCV))
 
         if self.units(UnitTypeId.BARRACKS).exists and self.can_afford(UnitTypeId.MARINE):
             for bar in self.units(UnitTypeId.BARRACKS):
                 if bar.has_add_on and bar.noqueue:
                     if not self.can_afford(UnitTypeId.MARINE):
                         break
-                    await self.do(bar.train(UnitTypeId.MARINE))
+                    self.do(bar.train(UnitTypeId.MARINE))
 
         if self.units(UnitTypeId.STARPORT).exists and self.can_afford(UnitTypeId.MEDIVAC) and self.units(UnitTypeId.MEDIVAC).amount < 6:
             for sp in self.units(UnitTypeId.STARPORT):
                 if sp.noqueue:
                     if not self.can_afford(UnitTypeId.MEDIVAC):
                         break
-                    await self.do(sp.train(UnitTypeId.MEDIVAC))
+                    self.do(sp.train(UnitTypeId.MEDIVAC))
 
         elif self.supply_left < 3:
             if self.can_afford(UnitTypeId.SUPPLYDEPOT):
@@ -75,10 +76,10 @@ class TerrantestBot(sc2.BotAI):
         if self.units(UnitTypeId.SUPPLYDEPOT).exists:
             if not self.units(UnitTypeId.BARRACKS).exists:
                 if self.can_afford(UnitTypeId.BARRACKS) and not self.already_pending(UnitTypeId.BARRACKS):
-                    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8).random_on_distance(4))
+                    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
             elif len(self.units(UnitTypeId.BARRACKS)) < 4:
                 if self.can_afford(UnitTypeId.BARRACKS) and not self.already_pending(UnitTypeId.BARRACKS):
-                    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8).random_on_distance(4))
+                    await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
 
             elif self.units(UnitTypeId.BARRACKS).exists and self.units(UnitTypeId.REFINERY).amount < 2:
                 if self.can_afford(UnitTypeId.REFINERY):
@@ -90,8 +91,7 @@ class TerrantestBot(sc2.BotAI):
                         worker = self.select_build_worker(vg.position)
                         if worker is None:
                             break
-
-                        await worker.build(UnitTypeId.REFINERY, vg)
+                        worker.build(UnitTypeId.REFINERY, vg)
                         break
 
             if self.units(UnitTypeId.BARRACKS).ready.exists:
@@ -107,10 +107,10 @@ class TerrantestBot(sc2.BotAI):
             if a.assigned_harvesters < a.ideal_harvesters:
                 w = self.workers.closer_than(20, a)
                 if w.exists:
-                    await self.do(w.random.gather(a))
+                    self.do(w.random.gather(a))
 
         for scv in self.units(UnitTypeId.SCV).idle:
-            await self.do(scv.gather(self.mineral_field.closest_to(cc)))
+            self.do(scv.gather(self.mineral_field.closest_to(cc)))
 
         if self.units(UnitTypeId.BARRACKS).ready:
             for bar in self.units(UnitTypeId.BARRACKS).ready:
@@ -124,7 +124,7 @@ class TerrantestBot(sc2.BotAI):
             if btl.exists and self.minerals >= 100:
                 if AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK in abilities:
                     if not self.already_pending_upgrade(UpgradeId.BARRACKSTECHLABRESEARCH_STIMPACK):
-                        await self.do(btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK))
+                        self.do(btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK))
                         self.stim_started = True
 
     async def expand(self):
