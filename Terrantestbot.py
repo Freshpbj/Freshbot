@@ -112,9 +112,10 @@ class TerrantestBot(sc2.BotAI):
         for scv in self.units(UnitTypeId.SCV).idle:
             await self.do(scv.gather(self.mineral_field.closest_to(cc)))
 
-        for bar in self.units(UnitTypeId.BARRACKS).ready:
-            if bar.add_on_tag == 0 and not self.units(UnitTypeId.BARRACKSTECHLAB).exists:
-                await self.do(bar.build(UnitTypeId.BARRACKSTECHLAB))
+        if self.units(UnitTypeId.BARRACKS).ready:
+            for bar in self.units(UnitTypeId.BARRACKS).ready:
+                if bar.add_on_tag == 0 and not self.units(UnitTypeId.BARRACKSTECHLAB).exists:
+                    await self.do(bar.build(UnitTypeId.BARRACKSTECHLAB))
 
 # Trying to get Stimpack Research but failing, gets assertion error
         if self.vespene >= 100 and not self.stim_started:
