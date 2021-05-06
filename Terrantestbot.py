@@ -3,6 +3,7 @@ from sc2 import run_game, maps, Race, Difficulty
 from sc2.constants import *
 from sc2.ids.unit_typeid import UnitTypeId
 from sc2.ids.ability_id import AbilityId
+from sc2.units import Units
 from sc2.ids.buff_id import BuffId
 from sc2.ids.upgrade_id import UpgradeId
 from sc2.ids.effect_id import EffectId
@@ -25,7 +26,8 @@ class TerrantestBot(sc2.BotAI):
         if min([u.position.distance_to(self.enemy_start_locations[0]) for u in self.units]) < 5:
             return self.enemy_start_locations[0].position
 
-        return self.state.mineral_field.random.position
+        else:
+            return self.mineral_field.random.position
 
     async def on_step(self, iteration):
         await self.distribute_workers()
@@ -80,7 +82,7 @@ class TerrantestBot(sc2.BotAI):
 
             elif self.units(UnitTypeId.BARRACKS).exists and self.units(UnitTypeId.REFINERY).amount < 2:
                 if self.can_afford(UnitTypeId.REFINERY):
-                    vgs = self.state.vespene_geyser.closer_than(20.0, cc)
+                    vgs: Units = self.vespene_geyser.closer_than(20.0, cc)
                     for vg in vgs:
                         if self.units(UnitTypeId.REFINERY).closer_than(1.0, vg).exists:
                             break
@@ -89,7 +91,7 @@ class TerrantestBot(sc2.BotAI):
                         if worker is None:
                             break
 
-                        await self.do(worker.build(UnitTypeId.REFINERY, vg))
+                        await worker.build(UnitTypeId.REFINERY, vg)
                         break
 
             if self.units(UnitTypeId.BARRACKS).ready.exists:
@@ -108,7 +110,7 @@ class TerrantestBot(sc2.BotAI):
                     await self.do(w.random.gather(a))
 
         for scv in self.units(UnitTypeId.SCV).idle:
-            await self.do(scv.gather(self.state.mineral_field.closest_to(cc)))
+            await self.do(scv.gather(self.mineral_field.closest_to(cc)))
 
         for bar in self.units(UnitTypeId.BARRACKS).ready:
             if bar.add_on_tag == 0 and not self.units(UnitTypeId.BARRACKSTECHLAB).exists:
