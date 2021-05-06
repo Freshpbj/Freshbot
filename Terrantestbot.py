@@ -55,14 +55,14 @@ class TerrantestBot(sc2.BotAI):
         if self.can_afford(UnitTypeId.SCV) and self.workers.amount < 30 and cc.is_idle:
             self.do(cc.train(UnitTypeId.SCV))
 
-        if self.structures(UnitTypeId.BARRACKS).exists and self.can_afford(UnitTypeId.MARINE):
+        if self.structures(UnitTypeId.BARRACKS).ready and self.can_afford(UnitTypeId.MARINE):
             for bar in self.structures(UnitTypeId.BARRACKS):
                 if bar.has_add_on and bar.noqueue:
                     if not self.can_afford(UnitTypeId.MARINE):
                         break
                     self.do(bar.train(UnitTypeId.MARINE))
 
-        if self.units(UnitTypeId.STARPORT).exists and self.can_afford(UnitTypeId.MEDIVAC) and self.units(
+        if self.units(UnitTypeId.STARPORT).ready and self.can_afford(UnitTypeId.MEDIVAC) and self.units(
                 UnitTypeId.MEDIVAC).amount < 6:
             for sp in self.structures(UnitTypeId.STARPORT):
                 if sp.noqueue:
