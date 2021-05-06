@@ -13,7 +13,6 @@ from sc2.player import Bot, Computer
 
 class TerrantestBot(sc2.BotAI):
     def __init__(self):
-        self.unit_command_uses_self_do = True
         self.stim_started = False
 
     def select_target(self):
@@ -37,7 +36,7 @@ class TerrantestBot(sc2.BotAI):
         if not ccs:
             target: Point2 = self.enemy_structures.random_or(self.enemy_start_locations[0]).position
             for unit in self.workers | self.units(UnitTypeId.MARINE):
-                self.do(unit.attack(target))
+                unit.attack(target)
             return
         else:
             cc: Unit = ccs.first
@@ -47,18 +46,17 @@ class TerrantestBot(sc2.BotAI):
             forces = self.units(UnitTypeId.MARINE) | self.units(UnitTypeId.MEDIVAC)
             if (iteration // 50) % 10 == 0:
                 for unit in forces:
-                    self.do(unit.attack(target))
+                    unit.attack(target)
             else:
                 for unit in forces.idle:
-                    self.do(unit.attack(target))
+                    unit.attack(target)
 
         if self.can_afford(UnitTypeId.SCV) and self.workers.amount < 30 and cc.is_idle:
-            self.do(cc.train(UnitTypeId.SCV))
+            cc.train(UnitTypeId.SCV)
 
-        if self.structures(UnitTypeId.BARRACKS).ready and self.can_afford(UnitTypeId.MARINE):
-            for bar in self.structures(UnitTypeId.BARRACKS):
-                if bar.is_idle:
-                    bar.train(UnitTypeId.MARINE)
+        for bar in self.structures(UnitTypeId.BARRACKS).ready.idle:
+            if self.can_afford(UnitTypeId.MARINE):
+                bar.train(UnitTypeId.MARINE)
 
         if self.units(UnitTypeId.STARPORT).ready and self.can_afford(UnitTypeId.MEDIVAC) and self.units(
                 UnitTypeId.MEDIVAC).amount < 6:
@@ -66,7 +64,7 @@ class TerrantestBot(sc2.BotAI):
                 if sp.noqueue:
                     if not self.can_afford(UnitTypeId.MEDIVAC):
                         break
-                    self.do(sp.train(UnitTypeId.MEDIVAC))
+                    sp.train(UnitTypeId.MEDIVAC)
 
         if self.supply_left < 3:
             if self.can_afford(UnitTypeId.SUPPLYDEPOT) and not self.already_pending(UnitTypeId.SUPPLYDEPOT):
@@ -107,15 +105,15 @@ class TerrantestBot(sc2.BotAI):
             if a.assigned_harvesters < a.ideal_harvesters:
                 w = self.workers.closer_than(20, a)
                 if w.exists:
-                    self.do(w.random.gather(a))
+                    w.random.gather(a)
 
         for scv in self.units(UnitTypeId.SCV).idle:
-            self.do(scv.gather(self.mineral_field.closest_to(cc)))
+            scv.gather(self.mineral_field.closest_to(cc))
 
         if self.structures(UnitTypeId.BARRACKS).ready:
             for bar in self.units(UnitTypeId.BARRACKS).ready:
                 if bar.add_on_tag == 0 and not self.structures(UnitTypeId.BARRACKSTECHLAB).exists:
-                    await self.do(bar.build(UnitTypeId.BARRACKSTECHLAB))
+                    await bar.build(UnitTypeId.BARRACKSTECHLAB)
 
         # Trying to get Stimpack Research but failing, gets assertion error
         if self.vespene >= 100 and not self.stim_started:
@@ -124,7 +122,7 @@ class TerrantestBot(sc2.BotAI):
             if btl.exists and self.minerals >= 100:
                 if AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK in abilities:
                     if not self.already_pending_upgrade(UpgradeId.BARRACKSTECHLABRESEARCH_STIMPACK):
-                        self.do(btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK))
+                        btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK)
                         self.stim_started = True
 
     async def expand(self):
