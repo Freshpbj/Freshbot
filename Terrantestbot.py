@@ -117,13 +117,11 @@ class TerrantestBot(sc2.BotAI):
 
         # Trying to get Stimpack Research but failing, gets assertion error
         if self.vespene >= 100 and not self.stim_started:
-            btl = self.units(UnitTypeId.BARRACKSTECHLAB).ready
-            abilities = await self.get_available_abilities(btl)
+            btl = self.units(UnitTypeId.BARRACKSTECHLAB).ready.idle
             if btl.exists and self.minerals >= 100:
-                if AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK in abilities:
-                    if not self.already_pending_upgrade(UpgradeId.BARRACKSTECHLABRESEARCH_STIMPACK):
-                        btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK)
-                        self.stim_started = True
+                if not self.already_pending_upgrade(UpgradeId.BARRACKSTECHLABRESEARCH_STIMPACK):
+                    btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK)
+                    self.stim_started = True
 
     async def expand(self):
         if self.units(UnitTypeId.COMMANDCENTER).amount < 2 and self.can_afford(UnitTypeId.COMMANDCENTER):
