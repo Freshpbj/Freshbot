@@ -32,7 +32,7 @@ class TerrantestBot(sc2.BotAI):
         await self.expand()
         cc = (self.units(UnitTypeId.COMMANDCENTER) | self.units(UnitTypeId.ORBITALCOMMAND))
         if not cc.exists:
-            target = self.enemy_structures.random_or(self.enemy_start_locations[0]).position
+            target = self.enemy_structures.random or (self.enemy_start_locations[0]).position
             for unit in self.workers | self.units(UnitTypeId.MARINE):
                 await self.do(unit.attack(target))
             return
@@ -132,4 +132,4 @@ class TerrantestBot(sc2.BotAI):
 run_game(maps.get("AutomatonLE"), [
         Bot(Race.Terran, TerrantestBot()),
         Computer(Race.Protoss, Difficulty.Easy)
-    ], realtime = False)
+    ], realtime=False)
