@@ -58,13 +58,9 @@ class TerrantestBot(sc2.BotAI):
             if self.can_afford(UnitTypeId.MARINE):
                 bar.train(UnitTypeId.MARINE)
 
-        if self.units(UnitTypeId.STARPORT).ready and self.can_afford(UnitTypeId.MEDIVAC) and self.units(
-                UnitTypeId.MEDIVAC).amount < 6:
-            for sp in self.structures(UnitTypeId.STARPORT):
-                if sp.noqueue:
-                    if not self.can_afford(UnitTypeId.MEDIVAC):
-                        break
-                    sp.train(UnitTypeId.MEDIVAC)
+        for sp in self.structures(UnitTypeId.STARPORT).ready.idle:
+            if self.can_afford(UnitTypeId.MEDIVAC) and self.units.of_type(UnitTypeId.MEDIVAC).amount < 6:
+                sp.train(UnitTypeId.MEDIVAC)
 
         if self.supply_left < 3:
             if self.can_afford(UnitTypeId.SUPPLYDEPOT) and not self.already_pending(UnitTypeId.SUPPLYDEPOT):
