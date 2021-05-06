@@ -55,8 +55,8 @@ class TerrantestBot(sc2.BotAI):
         if self.can_afford(UnitTypeId.SCV) and self.workers.amount < 30 and cc.is_idle:
             self.do(cc.train(UnitTypeId.SCV))
 
-        if self.units(UnitTypeId.BARRACKS).exists and self.can_afford(UnitTypeId.MARINE):
-            for bar in self.units(UnitTypeId.BARRACKS):
+        if self.structures(UnitTypeId.BARRACKS).exists and self.can_afford(UnitTypeId.MARINE):
+            for bar in self.structures(UnitTypeId.BARRACKS):
                 if bar.has_add_on and bar.noqueue:
                     if not self.can_afford(UnitTypeId.MARINE):
                         break
@@ -64,7 +64,7 @@ class TerrantestBot(sc2.BotAI):
 
         if self.units(UnitTypeId.STARPORT).exists and self.can_afford(UnitTypeId.MEDIVAC) and self.units(
                 UnitTypeId.MEDIVAC).amount < 6:
-            for sp in self.units(UnitTypeId.STARPORT):
+            for sp in self.structures(UnitTypeId.STARPORT):
                 if sp.noqueue:
                     if not self.can_afford(UnitTypeId.MEDIVAC):
                         break
@@ -78,34 +78,34 @@ class TerrantestBot(sc2.BotAI):
             if (
                 self.can_afford(UnitTypeId.BARRACKS)
                 and not self.already_pending(UnitTypeId.BARRACKS)
-                and self.units(UnitTypeId.BARRACKS).amount < 4
+                and self.structures(UnitTypeId.BARRACKS).amount < 4
             ):
                 await self.build(UnitTypeId.BARRACKS, near=cc.position.towards(self.game_info.map_center, 8))
 
-            elif self.units(UnitTypeId.BARRACKS).exists and self.units(UnitTypeId.REFINERY).amount < 2:
-                if self.can_afford(UnitTypeId.REFINERY):
-                    vgs: Units = self.vespene_geyser.closer_than(20.0, cc)
-                    for vg in vgs:
-                        if self.units(UnitTypeId.REFINERY).closer_than(1.0, vg).exists:
-                            break
-
-                        worker = self.select_build_worker(vg.position)
-                        if worker is None:
-                            break
-                        worker.build(UnitTypeId.REFINERY, vg)
+        if self.structures(UnitTypeId.BARRACKS).exists and self.structures(UnitTypeId.REFINERY).amount < 2:
+            if self.can_afford(UnitTypeId.REFINERY):
+                vgs: Units = self.vespene_geyser.closer_than(20.0, cc)
+                for vg in vgs:
+                    if self.structures(UnitTypeId.REFINERY).closer_than(1.0, vg).exists:
                         break
 
-        if self.units(UnitTypeId.BARRACKS).ready.exists:
-            f = self.units(UnitTypeId.FACTORY)
+                    worker = self.select_build_worker(vg.position)
+                    if worker is None:
+                        break
+                    worker.build(UnitTypeId.REFINERY, vg)
+                    break
+
+        if self.structures(UnitTypeId.BARRACKS).ready.exists:
+            f = self.structures(UnitTypeId.FACTORY)
             if not f.exists:
                 if self.can_afford(UnitTypeId.FACTORY):
                     await self.build(UnitTypeId.FACTORY, near=cc.position.towards(self.game_info.map_center, 8))
-            elif f.ready.exists and self.units(UnitTypeId.STARPORT).amount < 1:
+            elif f.ready.exists and self.structures(UnitTypeId.STARPORT).amount < 1:
                 if self.can_afford(UnitTypeId.STARPORT):
                     await self.build(UnitTypeId.STARPORT,
                                      near=cc.position.towards(self.game_info.map_center, 15).random_on_distance(8))
 
-        for a in self.units(UnitTypeId.REFINERY):
+        for a in self.structures(UnitTypeId.REFINERY):
             if a.assigned_harvesters < a.ideal_harvesters:
                 w = self.workers.closer_than(20, a)
                 if w.exists:
@@ -114,9 +114,9 @@ class TerrantestBot(sc2.BotAI):
         for scv in self.units(UnitTypeId.SCV).idle:
             self.do(scv.gather(self.mineral_field.closest_to(cc)))
 
-        if self.units(UnitTypeId.BARRACKS).ready:
+        if self.structures(UnitTypeId.BARRACKS).ready:
             for bar in self.units(UnitTypeId.BARRACKS).ready:
-                if bar.add_on_tag == 0 and not self.units(UnitTypeId.BARRACKSTECHLAB).exists:
+                if bar.add_on_tag == 0 and not self.structures(UnitTypeId.BARRACKSTECHLAB).exists:
                     await self.do(bar.build(UnitTypeId.BARRACKSTECHLAB))
 
         # Trying to get Stimpack Research but failing, gets assertion error
