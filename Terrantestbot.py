@@ -1,3 +1,4 @@
+from typing import List
 import sc2
 from sc2 import run_game, maps, Race, Difficulty
 from sc2.constants import *
@@ -7,7 +8,7 @@ from sc2.units import Units
 from sc2.unit import Unit
 from sc2.ids.buff_id import BuffId
 from sc2.ids.upgrade_id import UpgradeId
-from sc2.position import Point2
+from sc2.position import Point2, Point3
 from sc2.player import Bot, Computer
 
 
@@ -106,15 +107,62 @@ class TerrantestBot(sc2.BotAI):
         for scv in self.units(UnitTypeId.SCV).idle:
             scv.gather(self.mineral_field.closest_to(cc))
 
-        if self.structures(UnitTypeId.BARRACKS).ready:
-            for bar in self.units(UnitTypeId.BARRACKS).ready:
-                if bar.add_on_tag == 0 and not self.structures(UnitTypeId.BARRACKSTECHLAB).exists:
-                    await bar.build(UnitTypeId.BARRACKSTECHLAB)
+        def barracks_points_to_build_addon(sp_position: Point2) -> List[Point2]:
+            """ Return all points that need to be checked when trying to build an addon. Returns 4 points. """
+            addon_offset: Point2 = Point2((2.5, -0.5))
+            addon_position: Point2 = sp_position + addon_offset
+            addon_points = [
+                (addon_position + Point2((x - 0.5, y - 0.5))).rounded for x in range(0, 2) for y in range(0, 2)
+            ]
+            return addon_points
+
+        # build techlabs on barracks or lift up if no space
+        for btl in self.structures(UnitTypeId.BARRACKS).ready.idle:
+            if not btl.has_techlab and self.can_afford(UnitTypeId.BARRACKSTECHLAB):
+                addon_points = barracks_points_to_build_addon(btl.position)
+                if all(
+                    self.in_map_bounds(addon_point)
+                    and self.in_placement_grid(addon_point)
+                    and self.in_pathing_grid(addon_point)
+                    for addon_point in addon_points
+                ):
+                    btl.build(UnitTypeId.BARRACKSTECHLAB)
+                else:
+                    btl(AbilityId.LIFT)
+
+        def barracks_land_positions(sp_position: Point2) -> List[Point2]:
+            """ Return all points that need to be checked when trying to land at a location where there is enough space to build an addon. Returns 13 points. """
+            land_positions = [(sp_position + Point2((x, y))).rounded for x in range(-1, 2) for y in range(-1, 2)]
+            return land_positions + barracks_points_to_build_addon(sp_position)
+
+        # Find a position to land for a flying starport so that it can build an addon
+        for sp in self.structures(UnitTypeId.BARRACKSFLYING).idle:
+            possible_land_positions_offset = sorted(
+                (Point2((x, y)) for x in range(-10, 10) for y in range(-10, 10)),
+                key=lambda point: point.x ** 2 + point.y ** 2,
+            )
+            offset_point: Point2 = Point2((-0.5, -0.5))
+            possible_land_positions = (sp.position.rounded + offset_point + p for p in possible_land_positions_offset)
+            for target_land_position in possible_land_positions:
+                land_and_addon_points: List[Point2] = barracks_land_positions(target_land_position)
+                if all(
+                    self.in_map_bounds(land_pos) and self.in_placement_grid(land_pos) and self.in_pathing_grid(land_pos)
+                    for land_pos in land_and_addon_points
+                ):
+                    sp(AbilityId.LAND, target_land_position)
+                    break
+
+        # Show where it is flying to and show grid
+        unit: Unit
+        for sp in self.structures(UnitTypeId.BARRACKSFLYING).filter(lambda unit: not unit.is_idle):
+            if isinstance(sp.order_target, Point2):
+                p: Point3 = Point3((*sp.order_target, self.get_terrain_z_height(sp.order_target)))
+                self.client.debug_box2_out(p, color=Point3((255, 0, 0)))
 
         # Trying to get Stimpack Research but failing, gets assertion error
         if self.vespene >= 100 and not self.stim_started:
             btl = self.units(UnitTypeId.BARRACKSTECHLAB).ready.idle
-            if btl.exists and self.minerals >= 100:
+            if btl.ready and self.minerals >= 100:
                 if not self.already_pending_upgrade(UpgradeId.BARRACKSTECHLABRESEARCH_STIMPACK):
                     btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK)
                     self.stim_started = True
