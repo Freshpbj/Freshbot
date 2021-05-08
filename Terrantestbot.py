@@ -174,4 +174,4 @@ class TerrantestBot(sc2.BotAI):
 run_game(maps.get("AutomatonLE"), [
     Bot(Race.Terran, TerrantestBot()),
     Computer(Race.Protoss, Difficulty.Easy)
-], realtime=False)
+], realtime=True)

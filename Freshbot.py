@@ -1,9 +1,10 @@
 import random
+import numpy
 from contextlib import suppress
 import sc2
 from sc2 import run_game, maps, Race, Difficulty
 from sc2.constants import *
-from sc2.position import Point2
+from sc2.position import Point2, Point3
 from sc2.unit import Unit
 from sc2.units import Units
 from sc2.ids.buff_id import BuffId
@@ -30,6 +31,9 @@ class Freshbot(sc2.BotAI):
 
         if iteration == 0:
             await self.chat_send("Freshbot as designed by Freshpbj")
+
+        # Draw creep pixelmap for debugging now
+        # self.draw_creep_pixelmap()
 
         # send all idle forces to attack if we have more than 8 ling/roach/ravager, might need to bump it up
         if forces.amount > 8 and iteration % 50 == 0:
@@ -82,6 +86,19 @@ class Freshbot(sc2.BotAI):
 # macro/economy stuff here
 
 # CREEP SPREAD, make this do some crazy shit and spread creep across the entire map
+
+    # makes a pixelmap for the computer to see for machine learning..later...maybe)
+    def draw_creep_pixelmap(self):
+        for (y, x), value in numpy.ndenumerate(self.state.creep.data_numpy):
+            p = Point2((x, y))
+            h2 = self.get_terrain_z_height(p)
+            pos = Point3((p.x, p.y, h2))
+            # Red if there is no creep
+            color = Point3((255, 0, 0))
+            if value == 1:
+                # Green if there is creep
+                color = Point3((0, 255, 0))
+            self._client.debug_box2_out(pos, half_vertex_length=0.25, color=color)
 
 # scouting, need to know what to build before we build it!
 
