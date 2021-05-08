@@ -159,13 +159,12 @@ class TerrantestBot(sc2.BotAI):
                 p: Point3 = Point3((*sp.order_target, self.get_terrain_z_height(sp.order_target)))
                 self.client.debug_box2_out(p, color=Point3((255, 0, 0)))
 
-        # Trying to get Stimpack Research but failing, gets assertion error
-        if self.vespene >= 100 and not self.stim_started:
-            btl = self.units(UnitTypeId.BARRACKSTECHLAB).ready.idle
-            if btl.ready and self.minerals >= 100:
-                if not self.already_pending_upgrade(UpgradeId.BARRACKSTECHLABRESEARCH_STIMPACK):
-                    btl(AbilityId.BARRACKSTECHLABRESEARCH_STIMPACK)
-                    self.stim_started = True
+        # Stimpack research, super important
+        if self.already_pending_upgrade(UpgradeId.STIMPACK) == 0 and self.can_afford(UpgradeId.STIMPACK):
+            bar_techlab_ready: Units = self.structures(UnitTypeId.BARRACKSTECHLAB).ready
+            if bar_techlab_ready:
+                self.research(UpgradeId.STIMPACK)
+                self.stim_started = True
 
     async def expand(self):
         if self.units(UnitTypeId.COMMANDCENTER).amount < 2 and self.can_afford(UnitTypeId.COMMANDCENTER):
