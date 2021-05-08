@@ -116,7 +116,7 @@ class TerrantestBot(sc2.BotAI):
             ]
             return addon_points
 
-        # build techlabs on barracks or lift up if no space
+        # build techlab on barracks or lift up if no space
         for btl in self.structures(UnitTypeId.BARRACKS).ready.idle:
             if not btl.has_techlab and self.can_afford(UnitTypeId.BARRACKSTECHLAB):
                 addon_points = barracks_points_to_build_addon(btl.position)
