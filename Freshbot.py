@@ -54,6 +54,14 @@ class Freshbot(sc2.BotAI):
 
         await self.distribute_workers()
 
+        if larvae and self.can_afford(UnitTypeId.ZERGLING) and self.structures(UnitTypeId.SPAWNINGPOOL).ready:
+            larvae.random.train(UnitTypeId.ZERGLING)
+
+        if larvae and self.can_afford(UnitTypeId.ROACH) and self.structures(UnitTypeId.ROACHWARREN).ready:
+            larvae.random.train(UnitTypeId.ROACH)
+
+        # transform roaches into ravagers at a ratio (4ish?:1)
+
 # make building and expansion logic here
         # Expand if we have 300 minerals, try to expand if there is one more expansion location available
         if self.townhalls.amount < 2 and self.workers.amount > 16:
@@ -68,6 +76,19 @@ class Freshbot(sc2.BotAI):
             map_center = self.game_info.map_center
             position_towards_map_center = self.start_location.towards(map_center, distance=5)
             await self.build(UnitTypeId.SPAWNINGPOOL, near=position_towards_map_center, placement_step=1)
+
+        if self.structures(UnitTypeId.SPAWNINGPOOL).exists and self.structures(UnitTypeId.EXTRACTOR).amount < 2:
+            if self.can_afford(UnitTypeId.EXTRACTOR):
+                vgs: Units = self.vespene_geyser.closer_than(20.0, self.townhalls.first)
+                for vg in vgs:
+                    if self.structures(UnitTypeId.EXTRACTOR).closer_than(1.0, vg).exists:
+                        break
+
+                    worker = self.select_build_worker(vg.position)
+                    if worker is None:
+                        break
+                    worker.build(UnitTypeId.EXTRACTOR, vg)
+                    break
 
         if (
             self.can_afford(UnitTypeId.QUEEN)
@@ -115,4 +136,4 @@ class Freshbot(sc2.BotAI):
 run_game(maps.get("AutomatonLE"), [
     Bot(Race.Zerg, Freshbot()),
     Computer(Race.Protoss, Difficulty.Easy)
-], realtime=False)
+], realtime=True)
