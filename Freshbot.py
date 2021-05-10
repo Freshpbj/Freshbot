@@ -32,7 +32,7 @@ class Freshbot(sc2.BotAI):
         if iteration == 0:
             await self.chat_send("Freshbot as designed by Freshpbj")
 
-        # Draw creep pixelmap for debugging now
+        # Draws red/green creep squares showing all placement options
         # self.draw_creep_pixelmap()
 
         # send all idle forces to attack if we have more than 8 ling/roach/ravager, might need to bump it up
@@ -84,7 +84,11 @@ class Freshbot(sc2.BotAI):
                 queen(AbilityId.EFFECT_INJECTLARVA, hq)
 
 # macro/economy stuff here
-
+        if self.can_afford(UnitTypeId.ROACHWARREN):
+            if not self.already_pending(UnitTypeId.ROACHWARREN) and not self.structures(UnitTypeId.ROACHWARREN).ready:
+                map_center = self.game_info.map_center
+                position_towards_map_center = self.start_location.towards(map_center, distance=5)
+                await self.build(UnitTypeId.ROACHWARREN, near=position_towards_map_center, placement_step=1)
 # CREEP SPREAD, make this do some crazy shit and spread creep across the entire map
 
     # makes a pixelmap for the computer to see for machine learning..later...maybe)
@@ -111,4 +115,4 @@ class Freshbot(sc2.BotAI):
 run_game(maps.get("AutomatonLE"), [
     Bot(Race.Zerg, Freshbot()),
     Computer(Race.Protoss, Difficulty.Easy)
-], realtime=True)
+], realtime=False)
