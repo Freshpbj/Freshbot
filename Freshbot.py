@@ -1,6 +1,5 @@
 import random
 import numpy
-from contextlib import suppress
 import sc2
 from sc2 import run_game, maps, Race, Difficulty
 from sc2.constants import *
@@ -13,6 +12,11 @@ from sc2.player import Bot, Computer
 
 
 # on_step does the "await" functions EVERY STEP OF THE GAME
+# TODO List - Make ravagers
+# Creep spread
+# expand to 3rd/4th bases
+# get upgrades (burrow/zerglingspeed/attack/armor)
+# nydus worm networking
 
 class Freshbot(sc2.BotAI):
     def __init__(self):
@@ -55,7 +59,8 @@ class Freshbot(sc2.BotAI):
         await self.distribute_workers()
 
         if larvae and self.can_afford(UnitTypeId.ZERGLING) and self.structures(UnitTypeId.SPAWNINGPOOL).ready:
-            larvae.random.train(UnitTypeId.ZERGLING)
+            if self.units(UnitTypeId.ZERGLING).amount < 40:
+                larvae.random.train(UnitTypeId.ZERGLING)
 
         if larvae and self.can_afford(UnitTypeId.ROACH) and self.structures(UnitTypeId.ROACHWARREN).ready:
             larvae.random.train(UnitTypeId.ROACH)
