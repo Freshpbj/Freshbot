@@ -15,7 +15,7 @@ from sc2.player import Bot, Computer
 # TODO List - Make ravagers
 # Creep spread
 # expand to 3rd/4th bases
-# get upgrades (burrow/zerglingspeed/attack/armor)
+# get upgrades (burrow/zergling speed/attack/armor)
 # nydus worm networking
 
 class Freshbot(sc2.BotAI):
