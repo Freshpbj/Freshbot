@@ -23,6 +23,52 @@ class Freshbot(sc2.BotAI):
         self.queensAssignedHatcheries = {}  # queen:hatch key:value pairs for larva injecting
         self.queenLimit = 8
 
+    def assignQueenTag(self):
+        if not hasattr(self, "queensAssignedHatcheries"):
+            self.queensAssignedHatcheries = {}
+
+        # if queen is done, move it to the closest hatch that doesnt have one assigned
+        queensNoInjectPartner = self.units(UnitTypeId.QUEEN).filter(lambda q: q.tag not in self.queensAssignedHatcheries.keys())
+        basesNoInjectPartner = self.townhalls.filter(lambda h: h.tag not in self.queensAssignedHatcheries.values())
+
+        for queen in queensNoInjectPartner:
+            if basesNoInjectPartner.amount == 0:
+                break
+            closestBase = basesNoInjectPartner.closest_to(queen)
+            self.queensAssignedHatcheries[queen.tag] = closestBase.tag
+            basesNoInjectPartner = basesNoInjectPartner - [closestBase]
+            break  # else on hatch gets assigned twice
+
+    async def doLarvaInjects(self):
+        aliveQueenTags = [queen.tag for queen in self.units(UnitTypeId.QUEEN)]
+        aliveBasesTags = [base.tag for base in self.townhalls]
+
+        toRemoveTags = []
+
+        if hasattr(self, "queensAssignedHatcheries"):
+            for queenTag, hatchTag in self.queensAssignedHatcheries.items():
+                # queen is no longer alive
+                if queenTag not in aliveQueenTags:
+                    toRemoveTags.append(queenTag)
+                    continue
+                # hatchery is no longer alive
+                if hatchTag not in aliveBasesTags:
+                    toRemoveTags.append(queenTag)
+                    continue
+                # queen and base are alive, try to inject if over 25 energy
+                queen = self.units(UnitTypeId.QUEEN).find_by_tag(queenTag)
+                hatch = self.townhalls.find_by_tag(hatchTag)
+                if hatch.is_ready:
+                    if queen.energy >= 25 and queen.is_idle and not hatch.has_buff(BuffId.QUEENSPAWNLARVATIMER):
+                        queen(AbilityId.EFFECT_INJECTLARVA, hatch)
+                    else:
+                        if queen.is_idle and queen.position.distance_to(hatch.position) > 10:
+                            queen(AbilityId.MOVE, hatch.position.to2)
+
+            # clear tags in case of death/destruction to keep dictionary relevant
+            for tag in toRemoveTags:
+                self.queensAssignedHatcheries.pop(tag)
+
     # super basic target enemy main base or seen structures, MAKE BETTER!!
     def select_target(self) -> Point2:
         if self.enemy_structures:
@@ -59,7 +105,7 @@ class Freshbot(sc2.BotAI):
         await self.distribute_workers()
 
         if larvae and self.can_afford(UnitTypeId.ZERGLING) and self.structures(UnitTypeId.SPAWNINGPOOL).ready:
-            if self.units(UnitTypeId.ZERGLING).amount < 40:
+            if self.units(UnitTypeId.ZERGLING).amount < 20:
                 larvae.random.train(UnitTypeId.ZERGLING)
 
         if larvae and self.can_afford(UnitTypeId.ROACH) and self.structures(UnitTypeId.ROACHWARREN).ready:
@@ -103,11 +149,6 @@ class Freshbot(sc2.BotAI):
         ):
             self.train(UnitTypeId.QUEEN)
 
-        # currently sends all queens together to each hatch, FIX THIS
-        for queen in self.units(UnitTypeId.QUEEN).idle:
-            hq: Unit = self.townhalls.first
-            if queen.energy >= 25 and not hq.has_buff(BuffId.QUEENSPAWNLARVATIMER):
-                queen(AbilityId.EFFECT_INJECTLARVA, hq)
 
 # macro/economy stuff here
         if self.can_afford(UnitTypeId.ROACHWARREN):
@@ -116,6 +157,9 @@ class Freshbot(sc2.BotAI):
                 position_towards_map_center = self.start_location.towards(map_center, distance=5)
                 await self.build(UnitTypeId.ROACHWARREN, near=position_towards_map_center, placement_step=1)
 # CREEP SPREAD, make this do some crazy shit and spread creep across the entire map
+        if self.units(UnitTypeId.QUEEN).amount >= 2:
+            self.assignQueenTag()
+            await self.doLarvaInjects()
 
     # makes a pixelmap for the computer to see for machine learning..later...maybe)
     def draw_creep_pixelmap(self):
