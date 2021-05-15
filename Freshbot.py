@@ -69,7 +69,7 @@ class Freshbot(sc2.BotAI):
 
 # make building and expansion logic here
         # Expand if we have 300 minerals, try to expand if there is one more expansion location available
-        if self.townhalls.amount < 2 and self.workers.amount > 16:
+        if self.townhalls.amount < 3 and self.workers.amount > 16 and self.can_afford(UnitTypeId.HATCHERY):
             location = await self.get_next_expansion()
             loc = await self.find_placement(UnitTypeId.HATCHERY, near=location, random_alternative=False, placement_step=1, max_distance=20)
             if loc is not None:
@@ -82,7 +82,7 @@ class Freshbot(sc2.BotAI):
             position_towards_map_center = self.start_location.towards(map_center, distance=5)
             await self.build(UnitTypeId.SPAWNINGPOOL, near=position_towards_map_center, placement_step=1)
 
-        if self.structures(UnitTypeId.SPAWNINGPOOL).exists and self.structures(UnitTypeId.EXTRACTOR).amount < 2:
+        if self.structures(UnitTypeId.SPAWNINGPOOL).exists:
             if self.can_afford(UnitTypeId.EXTRACTOR):
                 vgs: Units = self.vespene_geyser.closer_than(20.0, self.townhalls.first)
                 for vg in vgs:
@@ -141,4 +141,4 @@ class Freshbot(sc2.BotAI):
 run_game(maps.get("AutomatonLE"), [
     Bot(Race.Zerg, Freshbot()),
     Computer(Race.Protoss, Difficulty.Easy)
-], realtime=True)
+], realtime=False)
