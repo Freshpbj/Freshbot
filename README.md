@@ -21,3 +21,15 @@ Plan is for (in order of importance)
  - MAXIMUM creep spread
  - some form of early scout and defense
  - Hydra/Ling/Bane or Roach/Ravager builds based on scouted info(random if none)
+
+## Maps
+Official Blizzard map downloads are available from [Blizzard/s2client-proto](https://github.com/Blizzard/s2client-proto#downloads).
+Extract these maps into their respective subdirectories in the SC2 maps directory.
+
+e.g. `install-dir/Maps/Ladder2017Season1/`
+
+### Bot ladder maps
+Maps that are run on the [SC2 AI Ladder](http://sc2ai.net/) and [SC2 AI Arena](https://aiarena.net/) can be downloaded from the [sc2ai wiki](http://wiki.sc2ai.net/Ladder_Maps) and the [aiarena wiki](https://aiarena.net/wiki/bot-development/getting-started/#wiki-toc-maps).
+Extract these maps into the root of the SC2 maps directory (otherwise ladder replays won't work).
+
+e.g. `install-dir/Maps/AcropolisLE.SC2Map`
