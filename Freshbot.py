@@ -161,7 +161,16 @@ class Freshbot(sc2.BotAI):
             self.assignQueenTag()
             await self.doLarvaInjects()
 
-    # makes a pixelmap for the computer to see for machine learning..later...maybe)
+    # link up starting base to 2nd/3rd bases with creep
+    # def initial_creep_spread(self):
+    #     next_expansion = self.get_next_expansion()
+    #     creep_placement = await self.find_placement(UnitTypeId.CREEPTUMOR | UnitTypeId.CREEPTUMORQUEEN,
+    #                                                 near=next_expansion,
+    #                                                 max_distance=10, random_alternative=True, placement_step=1)
+    #     if creep tumor ability is ready and creep_placement has_creep:
+    #         use ability on creep_placement
+
+    # makes a pixelmap to see creep positions for machine learning..later...maybe)
     def draw_creep_pixelmap(self):
         for (y, x), value in numpy.ndenumerate(self.state.creep.data_numpy):
             p = Point2((x, y))
