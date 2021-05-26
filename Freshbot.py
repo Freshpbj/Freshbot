@@ -116,7 +116,13 @@ class Freshbot(sc2.BotAI):
 
 # make building and expansion logic here
         # Expand if we have 300 minerals, try to expand if there is one more expansion location available
-        if self.townhalls.amount < 3 and self.workers.amount > 16 and self.can_afford(UnitTypeId.HATCHERY):
+        if self.townhalls.amount < 2 and self.workers.amount > 16 and self.can_afford(UnitTypeId.HATCHERY):
+            location = await self.get_next_expansion()
+            loc = await self.find_placement(UnitTypeId.HATCHERY, near=location, random_alternative=False, placement_step=1, max_distance=20)
+            if loc is not None:
+                await self.expand_now(building=UnitTypeId.HATCHERY, max_distance=10, location=loc)
+
+        if self.townhalls.amount < 3 and self.supply_used >= 50 and self.can_afford(UnitTypeId.HATCHERY):
             location = await self.get_next_expansion()
             loc = await self.find_placement(UnitTypeId.HATCHERY, near=location, random_alternative=False, placement_step=1, max_distance=20)
             if loc is not None:
