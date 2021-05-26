@@ -122,7 +122,7 @@ class Freshbot(sc2.BotAI):
             if loc is not None:
                 await self.expand_now(building=UnitTypeId.HATCHERY, max_distance=10, location=loc)
 
-        if self.townhalls.amount < 3 and self.supply_used >= 50 and self.can_afford(UnitTypeId.HATCHERY):
+        if self.townhalls.amount < 3 and self.supply_used >= 70 and self.can_afford(UnitTypeId.HATCHERY):
             location = await self.get_next_expansion()
             loc = await self.find_placement(UnitTypeId.HATCHERY, near=location, random_alternative=False, placement_step=1, max_distance=20)
             if loc is not None:
@@ -196,7 +196,7 @@ class Freshbot(sc2.BotAI):
             {UnitTypeId.CREEPTUMOR, UnitTypeId.CREEPTUMORBURROWED, UnitTypeId.CREEPTUMORQUEEN})
         for tumor in all_creep_tumors:
             tumor_pos = tumor.position
-            print(tumor_pos)
+            #print((int(tumor_pos[0]), int(tumor_pos[1])))
             cv2.circle(game_data, (int(tumor_pos[0]), int(tumor_pos[1])), 15, (0, 255, 0), -1)  # BGR
             cv2.imshow('Intel', resized)
             cv2.waitKey(1)
