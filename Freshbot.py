@@ -1,5 +1,6 @@
 import random
-import numpy
+import cv2
+import numpy as np
 import sc2
 from sc2 import run_game, maps, Race, Difficulty
 from sc2.constants import *
@@ -82,8 +83,8 @@ class Freshbot(sc2.BotAI):
         if iteration == 0:
             await self.chat_send("Freshbot as designed by Freshpbj")
 
-        # Draws red/green creep squares showing all placement options
-        # self.draw_creep_pixelmap()
+        # draw an opencv image for creep
+        await self.intel()
 
         # send all idle forces to attack if we have more than 8 ling/roach/ravager, might need to bump it up
         if forces.amount > 8 and iteration % 50 == 0:
@@ -161,27 +162,38 @@ class Freshbot(sc2.BotAI):
             self.assignQueenTag()
             await self.doLarvaInjects()
 
-    # link up starting base to 2nd/3rd bases with creep
-    # def initial_creep_spread(self):
-    #     next_expansion = self.get_next_expansion()
-    #     creep_placement = await self.find_placement(UnitTypeId.CREEPTUMOR | UnitTypeId.CREEPTUMORQUEEN,
-    #                                                 near=next_expansion,
-    #                                                 max_distance=10, random_alternative=True, placement_step=1)
-    #     if creep tumor ability is ready and creep_placement has_creep:
-    #         use ability on creep_placement
+        if self.units(UnitTypeId.QUEEN).amount == 1:
+            await self.initial_creep_spread()
 
-    # makes a pixelmap to see creep positions for machine learning..later...maybe)
-    def draw_creep_pixelmap(self):
-        for (y, x), value in numpy.ndenumerate(self.state.creep.data_numpy):
-            p = Point2((x, y))
-            h2 = self.get_terrain_z_height(p)
-            pos = Point3((p.x, p.y, h2))
-            # Red if there is no creep
-            color = Point3((255, 0, 0))
-            if value == 1:
-                # Green if there is creep
-                color = Point3((0, 255, 0))
-            self._client.debug_box2_out(pos, half_vertex_length=0.25, color=color)
+    # link up starting base to 2nd/3rd bases with creep
+    async def initial_creep_spread(self):
+
+        for queen in self.units(UnitTypeId.QUEEN):
+            if queen.energy > 25 and queen.is_idle:
+                queen(AbilityId.BUILD_CREEPTUMOR_QUEEN, queen.position.towards(self.game_info.map_center, 8))
+
+    # makes a pixelmap to see creep positions for machine learning..later...maybe
+    async def intel(self):
+        # print(self.game_info.map_size)
+        # flip around. It's y, x when you're dealing with an array.
+        game_data = np.zeros((self.game_info.map_size[1], self.game_info.map_size[0], 3), np.uint8)
+        # flip horizontally to make our final fix in visual representation:
+        flipped = cv2.flip(game_data, 0)
+        # enlarge window so a human can see, take out resized and use flipped when doing machine learning
+        resized = cv2.resize(flipped, dsize=None, fx=2, fy=2)
+
+        cv2.imshow('Intel', resized)
+        cv2.waitKey(1)
+
+        # draws a circle in window showing all tumors / currently not working
+        all_creep_tumors: Units = self.structures.of_type(
+            {UnitTypeId.CREEPTUMOR, UnitTypeId.CREEPTUMORBURROWED, UnitTypeId.CREEPTUMORQUEEN})
+        for tumor in all_creep_tumors:
+            tumor_pos = tumor.position
+            print(tumor_pos)
+            cv2.circle(game_data, (int(tumor_pos[0]), int(tumor_pos[1])), 15, (0, 255, 0), -1)  # BGR
+            cv2.imshow('Intel', resized)
+            cv2.waitKey(1)
 
 # scouting, need to know what to build before we build it!
 
