@@ -171,7 +171,7 @@ class TerrantestBot(sc2.BotAI):
             await self.expand_now()
 
 
-run_game(maps.get("AutomatonLE"), [
+run_game(maps.get("RomanticideLE"), [
     Bot(Race.Terran, TerrantestBot()),
     Computer(Race.Protoss, Difficulty.Easy)
 ], realtime=True)

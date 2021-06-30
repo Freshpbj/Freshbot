@@ -209,7 +209,7 @@ class Freshbot(sc2.BotAI):
 
 
 # maps are at E://DiabloTre/StarCraftII/Maps/
-run_game(maps.get("AutomatonLE"), [
+run_game(maps.get("RomanticideLE"), [
     Bot(Race.Zerg, Freshbot()),
     Computer(Race.Protoss, Difficulty.Easy)
 ], realtime=False)
