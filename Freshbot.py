@@ -137,7 +137,7 @@ class Freshbot(sc2.BotAI):
 
         if self.structures(UnitTypeId.SPAWNINGPOOL).exists:
             if self.can_afford(UnitTypeId.EXTRACTOR):
-                vgs: Units = self.vespene_geyser.closer_than(20.0, self.townhalls.first)
+                vgs: Units = self.vespene_geyser.closer_than(15.0, self.townhalls.first)
                 for vg in vgs:
                     if self.structures(UnitTypeId.EXTRACTOR).closer_than(1.0, vg).exists:
                         break
@@ -191,13 +191,13 @@ class Freshbot(sc2.BotAI):
         cv2.imshow('Intel', resized)
         cv2.waitKey(1)
 
-        # draws a circle in window showing all tumors / currently not working
+        # draws a circle in window showing all tumors (having trouble with x,y flipping)
         all_creep_tumors: Units = self.structures.of_type(
             {UnitTypeId.CREEPTUMOR, UnitTypeId.CREEPTUMORBURROWED, UnitTypeId.CREEPTUMORQUEEN})
         for tumor in all_creep_tumors:
             tumor_pos = tumor.position
             #print((int(tumor_pos[0]), int(tumor_pos[1])))
-            cv2.circle(game_data, (int(tumor_pos[0]), int(tumor_pos[1])), 15, (0, 255, 0), -1)  # BGR
+            cv2.circle(resized, (int(tumor_pos[0]), int(tumor_pos[1])), 10, (0, 255, 0), -1)  # change resized to flipped/game_data
             cv2.imshow('Intel', resized)
             cv2.waitKey(1)
 
